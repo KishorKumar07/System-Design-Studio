@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  lint-typecheck-test:
+    runs-on: ubuntu-latest
+    env:
+      # Placeholder — Prisma Client needs a syntactically valid URL to
+      # construct, but nothing here actually connects to a database.
+      # authz.test.ts mocks the prisma module directly; the rest are pure
+      # schema/prompt-logic tests.
+      DATABASE_URL: "postgresql://user:pass@localhost:5432/ci"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test

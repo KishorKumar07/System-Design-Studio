@@ -1,0 +1,51 @@
+# Local full-stack verification — runs the app exactly as it will run on the
+# EC2 app server, so "works on my laptop" actually predicts "works on AWS".
+#
+# Uses pgvector/pgvector:pg16 (not plain postgres:16) even though this app
+# never touches the vector extension — this is the SAME image the shared
+# app server runs, so local behavior matches production, and it's the image
+# the Enterprise Knowledge Copilot sister project needs pgvector from.
+#
+# Usage:
+#   cp .env.example .env.docker   # fill in real values
+#   docker compose up --build
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: sds-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sds
+      POSTGRES_PASSWORD: devpass
+      POSTGRES_DB: system_design_studio
+    ports:
+      - "5434:5432" # matches the host port used in README's bare `docker run` instructions
+    volumes:
+      - sds_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sds -d system_design_studio"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sds-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env.docker
+    environment:
+      # Inside the Docker network, Postgres is reached by service name, not
+      # localhost or the host-mapped port.
+      DATABASE_URL: postgresql://sds:devpass@postgres:5432/system_design_studio
+    ports:
+      - "3000:3000"
+
+volumes:
+  sds_postgres_data:

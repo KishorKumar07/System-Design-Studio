@@ -3,6 +3,11 @@ import path from "path";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
+  // Standalone output: the Docker runtime image only needs .next/standalone +
+  // .next/static, not the full node_modules tree. Cuts the image from
+  // ~700MB to ~200MB — matters on a 2GB EC2 instance.
+  output: "standalone",
+
   // Pin the workspace root to this project — the parent Dragon Suite folder
   // has its own package-lock.json, which otherwise confuses Turbopack's
   // auto-detected root.

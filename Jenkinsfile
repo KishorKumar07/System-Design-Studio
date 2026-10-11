@@ -10,6 +10,7 @@ pipeline {
     APP_HOST     = 'ec2-user@172.31.2.45'
     PUBLIC_URL   = 'https://kishor-apps.duckdns.org'
     APP_DIR      = '/opt/apps/sds'
+    DEPLOY_KEY   = '/var/lib/jenkins/.ssh/deploy_key'
     // Prisma Client needs a syntactically valid URL to construct, but the
     // unit tests never connect to a database (same placeholder as ci.yml).
     DATABASE_URL = 'postgresql://user:pass@localhost:5432/ci'
@@ -59,20 +60,20 @@ pipeline {
     stage('Deploy') {
       when { expression { env.GIT_BRANCH in ['origin/master', 'master'] } }
       steps {
-        sshagent(['app-server-ssh']) {
-          sh """
-            ssh -o StrictHostKeyChecking=accept-new ${APP_HOST} '
-              set -e
-              aws ecr get-login-password --region ${AWS_REGION} \
-                | docker login --username AWS --password-stdin ${ECR_REGISTRY}
-              docker pull ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}
-              cd ${APP_DIR}
-              export IMAGE_TAG=${IMAGE_TAG}
-              docker compose run --rm app npm run db:deploy
-              docker compose up -d app
-            '
-          """
-        }
+        // The deploy key lives at /var/lib/jenkins/.ssh/deploy_key (mode 600,
+        // owned by jenkins), so no private key is stored in the Jenkins UI.
+        sh """
+          ssh -i ${DEPLOY_KEY} -o BatchMode=yes -o StrictHostKeyChecking=accept-new ${APP_HOST} '
+            set -e
+            aws ecr get-login-password --region ${AWS_REGION} \
+              | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+            docker pull ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}
+            cd ${APP_DIR}
+            export IMAGE_TAG=${IMAGE_TAG}
+            docker compose run --rm app npm run db:deploy
+            docker compose up -d app
+          '
+        """
       }
     }
 

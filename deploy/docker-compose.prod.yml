@@ -1,0 +1,42 @@
+# Production stack on the shared EC2 app server (copied to /opt/apps/sds/docker-compose.yml).
+#
+# - The app image is PULLED from ECR; the server never builds anything.
+# - Jenkins sets IMAGE_TAG (git SHA) at deploy time; defaults to :latest.
+# - Secrets live in /opt/apps/sds/.env on the server (never in git).
+# - Postgres is not published to the host; only the app can reach it over
+#   Docker's internal network. The app is bound to 127.0.0.1 so only Nginx
+#   (on the host) can reach it.
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: sds-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sds
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: system_design_studio
+    volumes:
+      - sds_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sds -d system_design_studio"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    image: 869935092639.dkr.ecr.ap-south-1.amazonaws.com/system-design-studio:${IMAGE_TAG:-latest}
+    container_name: sds-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://sds:${POSTGRES_PASSWORD}@postgres:5432/system_design_studio
+    ports:
+      - "127.0.0.1:3000:3000"
+
+volumes:
+  sds_postgres_data:

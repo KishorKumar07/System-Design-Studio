@@ -2,7 +2,7 @@
 
 Tracks progress against [AWS-DEPLOYMENT-PLAN.md](AWS-DEPLOYMENT-PLAN.md).
 
-**Owner:** Kishor · **Last updated:** 2026-10-10
+**Owner:** Kishor · **Last updated:** 2026-10-11
 
 ## Phase status
 
@@ -11,9 +11,9 @@ Tracks progress against [AWS-DEPLOYMENT-PLAN.md](AWS-DEPLOYMENT-PLAN.md).
 | 1 — AWS account + billing | Done | Completed 2026-10-09 / 2026-10-10 |
 | 2 — Concepts | Done | Region/AZ, EC2, EBS, VPC, Security Group, Key Pair, IAM, ECR |
 | 3 — Dockerise this app | Mostly done | Dockerfile, compose and build verified earlier; canvas save and LLM evaluation still need real API keys |
-| 4 — App server | Not started | Next up |
-| 5 — Domain + HTTPS | Not started | Needs Phase 4 |
-| 6 — Jenkins pipeline | Not started | Needs Phase 4 |
+| 4 — App server | Done (verified 2026-10-11) | SSH works, Docker 25 + Compose, 4 GB swap, 30 GB disk, Elastic IP attached |
+| 5 — Domain + HTTPS | Done (verified 2026-10-11) | DNS resolves, HTTP redirects to HTTPS, Nginx proxies to :3000, certificate valid to 2027-01-08, certbot renewal dry-run passes |
+| 6 — Jenkins pipeline | Not started | Next up |
 | 7 — Ship it | Not started | Needs Phases 4-6 |
 | 8 — Operations | Not started | Needs Phase 7 |
 
@@ -42,8 +42,8 @@ Tracks progress against [AWS-DEPLOYMENT-PLAN.md](AWS-DEPLOYMENT-PLAN.md).
 | Item | Value |
 |---|---|
 | Region | `ap-south-1` |
-| App server Elastic IP | |
+| App server Elastic IP | `3.7.202.176` |
 | Jenkins instance IP | |
-| DuckDNS hostname | |
+| DuckDNS hostname | `kishor-apps.duckdns.org` |
 | ECR registry URL | |
-| Live URL | |
+| Live URL | https://kishor-apps.duckdns.org (502 until Phase 7 deploys the app) |

@@ -1,0 +1,10 @@
+[Unit]
+Description=Run the Postgres backup every night
+
+[Timer]
+# 20:30 UTC = 02:00 IST. Persistent: if the server was off, run on next boot.
+OnCalendar=*-*-* 20:30:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

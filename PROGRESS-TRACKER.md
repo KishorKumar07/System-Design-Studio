@@ -13,8 +13,8 @@ Tracks progress against [AWS-DEPLOYMENT-PLAN.md](AWS-DEPLOYMENT-PLAN.md).
 | 3 — Dockerise this app | Mostly done | Dockerfile, compose and build verified earlier; canvas save and LLM evaluation still need real API keys |
 | 4 — App server | Done (verified 2026-10-11) | SSH works, Docker 25 + Compose, 4 GB swap, 30 GB disk, Elastic IP attached |
 | 5 — Domain + HTTPS | Done (verified 2026-10-11) | DNS resolves, HTTP redirects to HTTPS, Nginx proxies to :3000, certificate valid to 2027-01-08, certbot renewal dry-run passes |
-| 6 — Jenkins pipeline | Not started | Next up |
-| 7 — Ship it | Not started | Needs Phases 4-6 |
+| 6 — Jenkins pipeline | Done (2026-10-11) | Build #5 green end to end. Deploy uses a key file on the Jenkins server. Open: broken-test-blocks-deploy test and rollback test |
+| 7 — Ship it | Done (2026-10-11) | Live over HTTPS, migrated, 6 problems seeded, register/login/refresh/problems/evaluate verified in browser |
 | 8 — Operations | Not started | Needs Phase 7 |
 
 ## Phase 1 checklist
@@ -43,7 +43,7 @@ Tracks progress against [AWS-DEPLOYMENT-PLAN.md](AWS-DEPLOYMENT-PLAN.md).
 |---|---|
 | Region | `ap-south-1` |
 | App server Elastic IP | `3.7.202.176` |
-| Jenkins instance IP | |
+| Jenkins instance IP | `43.204.211.71` (reach the UI through an SSH tunnel; 8080 is not public) |
 | DuckDNS hostname | `kishor-apps.duckdns.org` |
-| ECR registry URL | |
+| ECR repository | `system-design-studio` in `ap-south-1`, keep last 10 images |
 | Live URL | https://kishor-apps.duckdns.org (502 until Phase 7 deploys the app) |

@@ -67,16 +67,35 @@ Tracks progress against [AWS-DEPLOYMENT-PLAN.md](AWS-DEPLOYMENT-PLAN.md).
 **apps-prod** (same IP and DNS name after start)
 1. EC2 console, Instance state, Start.
 2. Wait about 1 minute, then open https://kishor-apps.duckdns.org
-3. If the certificate shows an error after a long stop, SSH in and run `sudo certbot renew`.
+3. If the certificate shows an error after a long stop, open a Session Manager terminal (Systems Manager,
+   Fleet Manager, `apps-prod`, Connect) and run `sudo certbot renew`. There is no SSH rule for a personal IP any more.
 
 **jenkins** (public IP changes)
 1. EC2 console, Instance state, Start. Note the new public IP.
 2. Open the tunnel with the new IP:
    `ssh -i $HOME\.ssh\ekc-key.pem -L 8081:localhost:8080 ec2-user@<new-ip>`
 3. Open http://localhost:8081
-4. If SSH times out, your own IP changed: edit `jenkins-sg` and `apps-sg` to your current IP.
+4. If SSH times out, your own IP changed: edit the SSH rule in `jenkins-sg` to your current IP. (`apps-sg` has no
+   personal-IP SSH rule any more; Jenkins reaches `apps-prod` through the `jenkins-sg` to `apps-sg` rule.)
 5. Push to `master`, then wait up to 5 minutes for the poll (do not also click Build Now).
 
 ### Rollback
 On `apps-prod`: `cd /opt/apps/sds && IMAGE_TAG=<older-sha> docker compose up -d app`
 Available tags are listed in ECR (`system-design-studio`).
+
+## Update 2026-10-20: the server is now shared with a second project
+
+`apps-prod` also runs the Enterprise Knowledge Copilot (https://kishor-ekc.duckdns.org), deployed with
+GitHub Actions. System Design Studio itself is unchanged; these are the things that changed around it.
+
+| What | Before | Now |
+|---|---|---|
+| `apps-prod` instance type | `t3.small` (2 GB) | `c7i-flex.large` (2 vCPU, 4 GB). `t3.medium` is rejected on the AWS Free plan, and the other app needs about 2.2 GB. Same IP, disk and data |
+| Cost while running | about $28/month for both servers | about $75/month, so **stop `apps-prod` between demos** |
+| Shell access to `apps-prod` | SSH from my IP | **Session Manager** (browser terminal), no inbound port. The personal-IP SSH rule was deleted from `apps-sg` |
+| Host alarms | none | CloudWatch alarms for CPU, status check, memory and disk, emailed through SNS topic `ekc-alerts` |
+| Nightly backup | `system_design_studio` only | plus `enterprise_knowledge_copilot`, 15 minutes later, same bucket |
+
+Both apps' containers restart by themselves after a stop or a reboot (tested with a full reboot).
+SDS keeps its own Postgres container; the other app has its own, so the two share nothing but the host,
+Nginx and the Elastic IP.
